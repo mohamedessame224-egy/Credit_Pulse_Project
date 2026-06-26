@@ -1,0 +1,80 @@
+# ============================================================
+# Credit Pulse - Sample Survey File
+# النموذج الأساسي لملف الاستبيان
+# ============================================================
+# Format instructions:
+#   SECTION:      Section title in English
+#   SECTION_AR:   Section title in Arabic
+#   QUESTION:     Question text in English
+#   QUESTION_AR:  Question text in Arabic
+#   TYPE:         single_choice | multiple_choice | rating | text
+#   OPTIONS:      Pipe-separated options in English  (for choice types)
+#   OPTIONS_AR:   Pipe-separated options in Arabic   (for choice types)
+#   REQUIRED:     yes (default) | no
+# ============================================================
+
+SECTION: Work Environment
+SECTION_AR: بيئة العمل
+
+QUESTION: How do you rate the overall work environment in your department?
+QUESTION_AR: كيف تقيم بيئة العمل العامة في قسمك؟
+TYPE: rating
+REQUIRED: yes
+
+QUESTION: How do you rate communication and collaboration between departments?
+QUESTION_AR: كيف تقيم مستوى التواصل والتعاون بين الأقسام؟
+TYPE: single_choice
+OPTIONS: Excellent|Very Good|Good|Needs Improvement|Poor
+OPTIONS_AR: ممتاز|جيد جداً|جيد|يحتاج تحسين|ضعيف
+REQUIRED: yes
+
+QUESTION: What are the main challenges you face in the work environment?
+QUESTION_AR: ما هي أبرز التحديات التي تواجهها في بيئة العمل؟
+TYPE: multiple_choice
+OPTIONS: Work Pressure|Lack of Resources|Poor Communication|Technical Challenges|Management Relations|Other
+OPTIONS_AR: ضغط العمل|قلة الموارد|ضعف التواصل|التحديات التقنية|العلاقة مع الإدارة|أخرى
+REQUIRED: no
+
+# ------------------------------------------------------------
+
+SECTION: Leadership & Management
+SECTION_AR: القيادة والإدارة
+
+QUESTION: How do you rate your direct manager's effectiveness in leading the team?
+QUESTION_AR: كيف تقيم كفاءة مديرك المباشر في إدارة الفريق؟
+TYPE: rating
+REQUIRED: yes
+
+QUESTION: Do you feel that your feedback and ideas are heard by management?
+QUESTION_AR: هل تشعر أن ملاحظاتك وأفكارك يتم الاستماع إليها من قبل الإدارة؟
+TYPE: single_choice
+OPTIONS: Always|Often|Sometimes|Rarely|Never
+OPTIONS_AR: دائماً|غالباً|أحياناً|نادراً|أبداً
+REQUIRED: yes
+
+QUESTION: Any comments on leadership style in your department?
+QUESTION_AR: ما تعليقك على أسلوب القيادة في قسمك؟
+TYPE: text
+REQUIRED: no
+
+# ------------------------------------------------------------
+
+SECTION: Professional Development
+SECTION_AR: التطوير المهني
+
+QUESTION: How do you rate the training and development opportunities available to you?
+QUESTION_AR: كيف تقيم فرص التدريب والتطوير المتاحة لك؟
+TYPE: rating
+REQUIRED: yes
+
+QUESTION: What types of training do you need most?
+QUESTION_AR: ما أنواع التدريب التي تحتاجها أكثر؟
+TYPE: multiple_choice
+OPTIONS: Technical Skills|Leadership Skills|Credit Analysis|Communication Skills|Risk Management|Compliance
+OPTIONS_AR: مهارات تقنية|مهارات قيادية|تحليل الائتمان|مهارات التواصل|إدارة المخاطر|الامتثال
+REQUIRED: no
+
+QUESTION: How do you rate your overall job satisfaction?
+QUESTION_AR: كيف تقيم مستوى رضاك الوظيفي بشكل عام؟
+TYPE: rating
+REQUIRED: yes

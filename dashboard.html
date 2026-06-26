@@ -1,0 +1,317 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ tr['admin_title'] }}{% endblock %}
+
+{% block admin_content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 animate-in">
+    <div>
+        <h4 style="font-weight: 800; color: var(--nbe-navy); margin: 0;">
+            <i class="fas fa-tachometer-alt me-2" style="color: var(--nbe-gold-dark);"></i>
+            {{ tr['admin_title'] }}
+        </h4>
+        <p style="color: var(--text-secondary); font-size: 13px; margin: 4px 0 0;">
+            {{ survey.title_ar if lang == 'ar' and survey else (survey.title_en if survey else '') }}
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('reports.excel_report') }}" class="btn-outline-cp" style="padding: 8px 16px; font-size: 13px;">
+            <i class="fas fa-file-excel" style="color: #22c55e;"></i>
+            Excel
+        </a>
+        <a href="{{ url_for('reports.pdf_report') }}" class="btn-outline-cp" style="padding: 8px 16px; font-size: 13px;">
+            <i class="fas fa-file-pdf" style="color: #ef4444;"></i>
+            PDF
+        </a>
+        <a href="{{ url_for('reports.word_report') }}" class="btn-outline-cp" style="padding: 8px 16px; font-size: 13px;">
+            <i class="fas fa-file-word" style="color: #3b82f6;"></i>
+            Word
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards Row -->
+<div class="row g-3 mb-4">
+    <div class="col-xl col-md-4 animate-in">
+        <div class="stat-card navy">
+            <div class="stat-icon navy"><i class="fas fa-users"></i></div>
+            <div class="stat-value">{{ total }}</div>
+            <div class="stat-label">{{ tr['card_total'] }}</div>
+        </div>
+    </div>
+    <div class="col-xl col-md-4 animate-in delay-1">
+        <div class="stat-card gold">
+            <div class="stat-icon gold"><i class="fas fa-building"></i></div>
+            <div class="stat-value">{{ dept_count }}</div>
+            <div class="stat-label">{{ tr['card_depts'] }}</div>
+        </div>
+    </div>
+    <div class="col-xl col-md-4 animate-in delay-2">
+        <div class="stat-card green">
+            <div class="stat-icon green"><i class="fas fa-star"></i></div>
+            <div class="stat-value">{{ avg_satisfaction }}</div>
+            <div class="stat-label">{{ tr['card_satisfaction'] }} / 5</div>
+        </div>
+    </div>
+    <div class="col-xl col-md-6 animate-in delay-3">
+        <div class="stat-card" style="--score: {{ pulse_score }}; border-top: 4px solid var(--nbe-gold);">
+            <div class="text-center">
+                <div class="pulse-score-ring" style="--score: {{ pulse_score }};">
+                    <div class="pulse-score-inner">
+                        <div class="pulse-score-value">{{ pulse_score }}%</div>
+                        <div class="pulse-score-label">PULSE</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-label text-center mt-2">{{ tr['card_pulse_score'] }}</div>
+        </div>
+    </div>
+    <div class="col-xl col-md-6 animate-in delay-4">
+        <div class="stat-card purple">
+            <div class="stat-icon purple"><i class="fas fa-user-secret"></i></div>
+            <div class="stat-value">{{ anon_count }}</div>
+            <div class="stat-label">{{ tr['card_anonymous'] }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <!-- Trend Chart -->
+    <div class="col-lg-8 animate-in">
+        <div class="cp-card h-100">
+            <div class="cp-card-header">
+                <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                <h5>{{ 'اتجاه المشاركة - آخر 14 يوماً' if lang == 'ar' else 'Participation Trend - Last 14 Days' }}</h5>
+            </div>
+            <div class="cp-card-body">
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Satisfaction Distribution -->
+    <div class="col-lg-4 animate-in delay-1">
+        <div class="cp-card h-100">
+            <div class="cp-card-header">
+                <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
+                <h5>{{ 'توزيع الرضا' if lang == 'ar' else 'Satisfaction Distribution' }}</h5>
+            </div>
+            <div class="cp-card-body">
+                <div class="chart-container" style="height: 240px;">
+                    <canvas id="satisfactionPie"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Analysis + Question Stats -->
+<div class="row g-4 mb-4">
+    <!-- Department Bar Chart -->
+    <div class="col-lg-7 animate-in">
+        <div class="cp-card">
+            <div class="cp-card-header">
+                <div class="card-icon"><i class="fas fa-chart-bar"></i></div>
+                <h5>{{ 'مشاركة الأقسام' if lang == 'ar' else 'Department Participation' }}</h5>
+            </div>
+            <div class="cp-card-body">
+                <div class="chart-container" style="height: 320px;">
+                    <canvas id="deptChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Rating Stats -->
+    <div class="col-lg-5 animate-in delay-1">
+        <div class="cp-card">
+            <div class="cp-card-header">
+                <div class="card-icon"><i class="fas fa-star-half-alt"></i></div>
+                <h5>{{ 'تحليل أسئلة التقييم' if lang == 'ar' else 'Rating Questions Analysis' }}</h5>
+            </div>
+            <div class="cp-card-body">
+                {% for qs in question_stats %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size: 12px; color: var(--text-secondary); max-width: 75%;">
+                            {{ qs.text_ar if lang == 'ar' else qs.text_en }}
+                        </span>
+                        <span style="font-size: 13px; font-weight: 700; color: var(--nbe-navy);">
+                            {{ qs.avg }}/5
+                        </span>
+                    </div>
+                    <div style="background: var(--border-color); border-radius: 10px; height: 8px; overflow: hidden;">
+                        <div style="height: 100%; width: {{ (qs.avg / 5 * 100)|int }}%; background: {{ 'var(--nbe-gold)' if qs.avg >= 4 else ('var(--nbe-navy)' if qs.avg >= 3 else 'var(--nbe-red)') }}; border-radius: 10px; transition: width 1s ease;"></div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4" style="color: var(--text-muted);">
+                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                    <p style="font-size: 13px;">{{ 'لا توجد بيانات بعد' if lang == 'ar' else 'No data yet' }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Table -->
+<div class="cp-card animate-in">
+    <div class="cp-card-header">
+        <div class="card-icon"><i class="fas fa-table"></i></div>
+        <h5>{{ 'تفصيل الأقسام' if lang == 'ar' else 'Department Breakdown' }}</h5>
+    </div>
+    <div class="cp-card-body p-0">
+        <div class="table-responsive">
+            <table class="cp-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'القسم' if lang == 'ar' else 'Department' }}</th>
+                        <th>{{ 'المشاركون' if lang == 'ar' else 'Participants' }}</th>
+                        <th>{{ 'متوسط الرضا' if lang == 'ar' else 'Avg. Satisfaction' }}</th>
+                        <th>Pulse Score</th>
+                        <th>{{ 'الحالة' if lang == 'ar' else 'Status' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dept in dept_data %}
+                    {% set pulse = ((dept.avg / 5) * 100)|int %}
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-primary);">
+                            {{ dept.name_ar if lang == 'ar' else dept.name_en }}
+                        </td>
+                        <td>
+                            <span class="cp-badge cp-badge-navy">{{ dept.count }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width: 60px; background: var(--border-color); border-radius: 5px; height: 6px; overflow: hidden;">
+                                    <div style="height: 100%; width: {{ ((dept.avg/5)*100)|int }}%; background: var(--nbe-navy); border-radius: 5px;"></div>
+                                </div>
+                                <span style="font-weight: 600;">{{ dept.avg }}/5</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="font-weight: 700; color: {{ 'var(--nbe-gold-dark)' if pulse >= 70 else ('var(--text-secondary)' if pulse >= 50 else 'var(--nbe-red)') }};">
+                                {{ pulse }}%
+                            </span>
+                        </td>
+                        <td>
+                            <span class="cp-badge {{ 'cp-badge-green' if dept.avg >= 4 else ('cp-badge-gold' if dept.avg >= 3 else 'cp-badge-red') }}">
+                                {{ ('ممتاز' if lang == 'ar' else 'Excellent') if dept.avg >= 4 else (('جيد' if lang == 'ar' else 'Good') if dept.avg >= 3 else ('يحتاج تحسين' if lang == 'ar' else 'Needs Improvement')) }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4" style="color: var(--text-muted);">
+                            {{ 'لا توجد بيانات بعد. أضف بعض الإجابات لرؤية التحليل.' if lang == 'ar' else 'No data yet. Add some responses to see the analysis.' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const LANG = '{{ lang }}';
+const dayLabels = {{ day_labels | safe }};
+const trendData = {{ trend_data | safe }};
+const deptData = {{ dept_data | tojson | safe }};
+
+// Trend Chart
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+    type: 'line',
+    data: {
+        labels: dayLabels.map(d => d.slice(5)),
+        datasets: [{
+            label: LANG === 'ar' ? 'المشاركون' : 'Participants',
+            data: trendData,
+            borderColor: '#1B3A6B',
+            backgroundColor: 'rgba(27,58,107,0.08)',
+            borderWidth: 2.5,
+            pointBackgroundColor: '#C8A951',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            tension: 0.4,
+            fill: true,
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// Satisfaction Pie
+const pieCtx = document.getElementById('satisfactionPie').getContext('2d');
+new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+        labels: LANG === 'ar' ? ['ممتاز (5)', 'جيد (4)', 'مقبول (3)', 'ضعيف (1-2)'] : ['Excellent (5)', 'Good (4)', 'Fair (3)', 'Poor (1-2)'],
+        datasets: [{
+            data: [
+                {% set scores_5 = dept_data | selectattr('avg', 'ge', 4.5) | list | length %}
+                {% set scores_4 = dept_data | selectattr('avg', 'ge', 3.5) | list | length %}
+                {{ scores_5 or 0 }}, {{ scores_4 or 0 }}, {{ (dept_data|length - scores_4 - scores_5) | max(0) }}, 0
+            ],
+            backgroundColor: ['#1B3A6B', '#C8A951', '#5A6A7E', '#C41230'],
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+        },
+        cutout: '65%',
+    }
+});
+
+// Department Bar Chart
+const deptCtx = document.getElementById('deptChart').getContext('2d');
+new Chart(deptCtx, {
+    type: 'bar',
+    data: {
+        labels: deptData.map(d => LANG === 'ar' ? d.name_ar : d.name_en).map(n => n.length > 18 ? n.substr(0,18)+'...' : n),
+        datasets: [
+            {
+                label: LANG === 'ar' ? 'المشاركون' : 'Participants',
+                data: deptData.map(d => d.count),
+                backgroundColor: 'rgba(27,58,107,0.85)',
+                borderRadius: 6,
+                yAxisID: 'y',
+            },
+            {
+                label: LANG === 'ar' ? 'متوسط الرضا' : 'Avg Satisfaction',
+                data: deptData.map(d => d.avg),
+                backgroundColor: 'rgba(200,169,81,0.8)',
+                borderRadius: 6,
+                yAxisID: 'y1',
+            }
+        ]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+        scales: {
+            y: { beginAtZero: true, position: 'left', ticks: { stepSize: 1 }, title: { display: true, text: LANG === 'ar' ? 'عدد المشاركين' : 'Count' } },
+            y1: { beginAtZero: true, max: 5, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: LANG === 'ar' ? 'الرضا' : 'Rating' } },
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Credit Pulse{% endblock %} | البنك الأهلي المصري</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% if lang == 'ar' %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% endif %}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{{ 'rtl-body' if lang == 'ar' else 'ltr-body' }}">
+
+<!-- Top Bar -->
+<div class="top-bar">
+    <div class="container-fluid px-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="top-bar-left d-flex align-items-center gap-3">
+                <span class="top-bar-text">
+                    <i class="fas fa-university me-1"></i>
+                    {{ 'البنك الأهلي المصري' if lang == 'ar' else 'National Bank of Egypt' }}
+                </span>
+                <span class="top-bar-divider">|</span>
+                <span class="top-bar-text">
+                    <i class="fas fa-building me-1"></i>
+                    {{ 'قطاع الائتمان' if lang == 'ar' else 'Credit Sector' }}
+                </span>
+            </div>
+            <div class="top-bar-right d-flex align-items-center gap-3">
+                <span class="top-bar-text small">
+                    <i class="fas fa-clock me-1"></i>
+                    <span id="live-time"></span>
+                </span>
+                <a href="{{ url_for('employee.set_lang', lang='en' if lang == 'ar' else 'ar') }}"
+                   class="lang-btn">
+                    <i class="fas fa-language me-1"></i>
+                    {{ 'English' if lang == 'ar' else 'العربية' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Navbar -->
+<nav class="navbar navbar-expand-lg main-navbar">
+    <div class="container-fluid px-4">
+        <!-- Logo -->
+        <a class="navbar-brand d-flex align-items-center gap-3" href="{{ url_for('employee.index') }}">
+            <div class="logo-icon">
+                <span class="logo-cp">CP</span>
+            </div>
+            <div class="logo-text">
+                <div class="logo-title">Credit Pulse</div>
+                <div class="logo-subtitle">{{ 'منصة استبيانات الموظفين' if lang == 'ar' else 'Employee Survey Platform' }}</div>
+            </div>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <ul class="navbar-nav ms-auto gap-1">
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom {% if request.endpoint == 'employee.index' %}active{% endif %}"
+                       href="{{ url_for('employee.index') }}">
+                        <i class="fas fa-home me-1"></i>
+                        {{ tr['nav_home'] }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom {% if 'survey' in (request.endpoint or '') %}active{% endif %}"
+                       href="{{ url_for('employee.info') }}">
+                        <i class="fas fa-poll me-1"></i>
+                        {{ tr['nav_survey'] }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom nav-admin-btn" href="{{ url_for('admin.dashboard') }}">
+                        <i class="fas fa-chart-bar me-1"></i>
+                        {{ tr['nav_admin'] }}
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="container-fluid px-4 pt-3">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show cp-alert" role="alert">
+        <i class="fas fa-{{ 'exclamation-circle' if category == 'error' else 'check-circle' }} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- Main Content -->
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="main-footer">
+    <div class="container-fluid px-4">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <div class="footer-logo d-flex align-items-center gap-2">
+                    <div class="logo-icon-sm">CP</div>
+                    <span class="footer-brand">Credit Pulse</span>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <p class="footer-text mb-0">
+                    {{ '© 2024 البنك الأهلي المصري - قطاع الائتمان' if lang == 'ar' else '© 2024 National Bank of Egypt - Credit Sector' }}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="footer-badge">
+                    <i class="fas fa-lock me-1"></i>
+                    {{ 'آمن ومشفر' if lang == 'ar' else 'Secure & Encrypted' }}
+                </span>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Live Clock
+function updateClock() {
+    const now = new Date();
+    const el = document.getElementById('live-time');
+    if (el) el.textContent = now.toLocaleTimeString('{{ "ar-EG" if lang == "ar" else "en-US" }}');
+}
+setInterval(updateClock, 1000);
+updateClock();
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}{{ tr['info_title'] }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <!-- Step Indicator -->
+            <div class="d-flex align-items-center gap-2 mb-4 animate-in">
+                <div style="width: 36px; height: 36px; background: var(--nbe-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--nbe-navy-dark);">1</div>
+                <div style="height: 2px; flex: 1; background: var(--border-color); position: relative;">
+                    <div style="height: 100%; width: 0%; background: var(--nbe-gold);"></div>
+                </div>
+                <div style="width: 36px; height: 36px; background: var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-muted);">2</div>
+                <div style="height: 2px; flex: 1; background: var(--border-color);"></div>
+                <div style="width: 36px; height: 36px; background: var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-muted);">3</div>
+            </div>
+
+            <div class="cp-card animate-in delay-1">
+                <div class="cp-card-header">
+                    <div class="card-icon"><i class="fas fa-user-circle"></i></div>
+                    <h5>{{ tr['info_title'] }}</h5>
+                </div>
+                <div class="cp-card-body">
+                    <p class="mb-4" style="color: var(--text-secondary); font-size: 14px;">
+                        {{ tr['info_subtitle'] }}
+                    </p>
+
+                    <form method="POST" id="infoForm">
+                        <!-- Department (Required) -->
+                        <div class="cp-form-group">
+                            <label class="cp-label">
+                                <i class="fas fa-building me-2" style="color: var(--nbe-gold-dark);"></i>
+                                {{ tr['info_dept'] }}
+                            </label>
+                            <select name="department_id" class="cp-select" id="deptSelect" required>
+                                <option value="">{{ tr['info_dept_select'] }}</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}">
+                                    {{ dept.name_ar if lang == 'ar' else dept.name_en }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Anonymous Toggle -->
+                        <div class="cp-form-group">
+                            <div style="background: rgba(200,169,81,0.06); border: 1px solid rgba(200,169,81,0.2); border-radius: 10px; padding: 16px 20px;">
+                                <div class="form-check form-switch d-flex align-items-center gap-3">
+                                    <input class="form-check-input" type="checkbox" name="anonymous" id="anonymousSwitch"
+                                           style="width: 44px; height: 22px; cursor: pointer;"
+                                           onchange="toggleAnonymous(this.checked)">
+                                    <label class="form-check-label" for="anonymousSwitch" style="cursor: pointer;">
+                                        <div style="font-weight: 600; color: var(--text-primary);">
+                                            <i class="fas fa-user-secret me-2" style="color: var(--nbe-gold-dark);"></i>
+                                            {{ tr['info_anonymous'] }}
+                                        </div>
+                                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                                            {{ tr['info_anonymous_note'] }}
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Optional Fields -->
+                        <div id="optionalFields">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="cp-form-group">
+                                        <label class="cp-label">
+                                            <i class="fas fa-user me-2" style="color: var(--text-muted);"></i>
+                                            {{ tr['info_name'] }}
+                                        </label>
+                                        <input type="text" name="name" class="cp-input"
+                                               placeholder="{{ 'أدخل اسمك' if lang == 'ar' else 'Enter your name' }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="cp-form-group">
+                                        <label class="cp-label">
+                                            <i class="fas fa-id-badge me-2" style="color: var(--text-muted);"></i>
+                                            {{ tr['info_id'] }}
+                                        </label>
+                                        <input type="text" name="employee_id" class="cp-input"
+                                               placeholder="{{ 'أدخل رقمك الوظيفي' if lang == 'ar' else 'Enter your employee ID' }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Privacy Note -->
+                        <div class="d-flex align-items-start gap-2 mb-4 p-3" style="background: rgba(27,58,107,0.04); border-radius: 8px; border: 1px solid rgba(27,58,107,0.1);">
+                            <i class="fas fa-lock mt-1" style="color: var(--nbe-navy); font-size: 14px;"></i>
+                            <p class="mb-0" style="font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+                                {{ 'بياناتك محمية وآمنة. لن تُستخدم هذه المعلومات إلا لأغراض تحليل الاستبيان.' if lang == 'ar' else 'Your data is protected and secure. This information will only be used for survey analysis purposes.' }}
+                            </p>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('employee.index') }}" class="btn-outline-cp">
+                                <i class="fas fa-arrow-right" style="transform: scaleX({{ -1 if lang == 'ar' else 1 }});"></i>
+                                {{ 'رجوع' if lang == 'ar' else 'Back' }}
+                            </a>
+                            <button type="submit" class="btn-primary-cp">
+                                {{ tr['info_next'] }}
+                                <i class="fas fa-arrow-left" style="transform: scaleX({{ -1 if lang == 'ar' else 1 }});"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleAnonymous(checked) {
+    const fields = document.getElementById('optionalFields');
+    if (checked) {
+        fields.style.opacity = '0.4';
+        fields.style.pointerEvents = 'none';
+        fields.querySelectorAll('input').forEach(i => i.value = '');
+    } else {
+        fields.style.opacity = '1';
+        fields.style.pointerEvents = 'auto';
+    }
+}
+
+document.getElementById('infoForm').addEventListener('submit', function(e) {
+    const dept = document.getElementById('deptSelect').value;
+    if (!dept) {
+        e.preventDefault();
+        alert('{{ tr["info_required"] }}');
+        document.getElementById('deptSelect').focus();
+    }
+});
+</script>
+{% endblock %}

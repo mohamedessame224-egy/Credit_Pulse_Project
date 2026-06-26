@@ -1,0 +1,317 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ 'الإجابات التفصيلية' if lang == 'ar' else 'Detailed Responses' }}{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4 animate-in">
+    <div>
+        <h4 style="font-weight: 800; color: var(--nbe-navy); margin: 0;">
+            <i class="fas fa-list-alt me-2" style="color: var(--nbe-gold-dark);"></i>
+            {{ 'الإجابات التفصيلية' if lang == 'ar' else 'Detailed Responses' }}
+        </h4>
+        <p style="color: var(--text-secondary); font-size: 13px; margin: 4px 0 0;">
+            {{ 'إجمالي:' if lang == 'ar' else 'Total:' }}
+            <strong>{{ all_responses|length }}</strong>
+            {{ 'مشارك' if lang == 'ar' else 'participants' }}
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('reports.excel_report') }}" class="btn-gold-cp" style="padding: 9px 20px; font-size: 13px;">
+            <i class="fas fa-file-excel"></i>
+            {{ 'تصدير Excel' if lang == 'ar' else 'Export Excel' }}
+        </a>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="cp-card mb-4 animate-in delay-1">
+    <div class="cp-card-body" style="padding: 16px 24px;">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="cp-label" style="font-size: 12px;">{{ 'تصفية حسب القسم' if lang == 'ar' else 'Filter by Department' }}</label>
+                <select id="deptFilter" class="cp-select" style="padding: 8px 12px; font-size: 13px;" onchange="filterTable()">
+                    <option value="">{{ 'جميع الأقسام' if lang == 'ar' else 'All Departments' }}</option>
+                    {% for dept in dept_map.values() %}
+                    <option value="{{ dept.name_ar if lang == 'ar' else dept.name_en }}">
+                        {{ dept.name_ar if lang == 'ar' else dept.name_en }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="cp-label" style="font-size: 12px;">{{ 'بحث' if lang == 'ar' else 'Search' }}</label>
+                <div style="position: relative;">
+                    <input type="text" id="searchInput" class="cp-input" style="padding: 8px 12px 8px 36px; font-size: 13px;"
+                           placeholder="{{ 'ابحث باسم أو رقم الموظف...' if lang == 'ar' else 'Search by name or ID...' }}"
+                           oninput="filterTable()">
+                    <i class="fas fa-search" style="position: absolute; top: 50%; transform: translateY(-50%); {{ 'right' if lang == 'ar' else 'left' }}: 12px; color: var(--text-muted); font-size: 13px;"></i>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="cp-label" style="font-size: 12px;">{{ 'النوع' if lang == 'ar' else 'Type' }}</label>
+                <select id="anonFilter" class="cp-select" style="padding: 8px 12px; font-size: 13px;" onchange="filterTable()">
+                    <option value="">{{ 'الكل' if lang == 'ar' else 'All' }}</option>
+                    <option value="named">{{ 'مُعرَّف' if lang == 'ar' else 'Named' }}</option>
+                    <option value="anon">{{ 'مجهول' if lang == 'ar' else 'Anonymous' }}</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button onclick="resetFilters()" class="btn-outline-cp w-100" style="padding: 8px 12px; font-size: 13px;">
+                    <i class="fas fa-times"></i>
+                    {{ 'إعادة تعيين' if lang == 'ar' else 'Reset' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Responses Table -->
+<div class="cp-card animate-in delay-2">
+    <div class="cp-card-body p-0">
+        <div class="table-responsive">
+            <table class="cp-table" id="responsesTable">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>{{ 'القسم' if lang == 'ar' else 'Department' }}</th>
+                        <th>{{ 'المشارك' if lang == 'ar' else 'Participant' }}</th>
+                        <th>{{ 'الرقم الوظيفي' if lang == 'ar' else 'Employee ID' }}</th>
+                        <th>{{ 'النوع' if lang == 'ar' else 'Type' }}</th>
+                        <th>{{ 'متوسط التقييم' if lang == 'ar' else 'Avg. Rating' }}</th>
+                        <th>{{ 'تاريخ الإرسال' if lang == 'ar' else 'Submission Date' }}</th>
+                        <th>{{ 'تفاصيل' if lang == 'ar' else 'Details' }}</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% for resp in all_responses %}
+                    {% set dept = dept_map.get(resp.department_id) %}
+                    {% set dept_name = (dept.name_ar if lang == 'ar' else dept.name_en) if dept else '-' %}
+                    {% set score = resp.satisfaction_score %}
+                    <tr class="response-row"
+                        data-dept="{{ dept_name }}"
+                        data-name="{{ resp.employee_name or '' }}"
+                        data-id="{{ resp.employee_id or '' }}"
+                        data-anon="{{ 'anon' if resp.is_anonymous else 'named' }}">
+                        <td style="color: var(--text-muted); font-size: 12px;">{{ loop.index }}</td>
+                        <td>
+                            <span style="font-weight: 600; color: var(--text-primary); font-size: 13px;">
+                                {{ dept_name }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if resp.is_anonymous %}
+                            <span style="color: var(--text-muted); font-style: italic; font-size: 13px;">
+                                <i class="fas fa-user-secret me-1"></i>
+                                {{ 'مجهول' if lang == 'ar' else 'Anonymous' }}
+                            </span>
+                            {% else %}
+                            <span style="font-size: 13px;">{{ resp.employee_name or ('—' ) }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 13px; color: var(--text-secondary);">
+                            {{ resp.employee_id if not resp.is_anonymous and resp.employee_id else '—' }}
+                        </td>
+                        <td>
+                            <span class="cp-badge {{ 'cp-badge-navy' if not resp.is_anonymous else '' }}"
+                                  style="{{ 'background: rgba(139,92,246,0.1); color: #7c3aed;' if resp.is_anonymous else '' }}">
+                                <i class="fas fa-{{ 'user' if not resp.is_anonymous else 'user-secret' }} me-1"></i>
+                                {{ ('مُعرَّف' if lang == 'ar' else 'Named') if not resp.is_anonymous else ('مجهول' if lang == 'ar' else 'Anon') }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if score %}
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width: 50px; background: var(--border-color); border-radius: 5px; height: 6px; overflow: hidden;">
+                                    <div style="height: 100%; width: {{ ((score/5)*100)|int }}%; background: {{ 'var(--nbe-gold)' if score >= 4 else ('var(--nbe-navy)' if score >= 3 else 'var(--nbe-red)') }}; border-radius: 5px;"></div>
+                                </div>
+                                <span style="font-weight: 600; font-size: 13px; color: {{ 'var(--nbe-gold-dark)' if score >= 4 else ('var(--nbe-navy)' if score >= 3 else 'var(--nbe-red)') }};">
+                                    {{ score }}
+                                </span>
+                            </div>
+                            {% else %}
+                            <span style="color: var(--text-muted); font-size: 12px;">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 12px; color: var(--text-secondary);">
+                            {{ resp.submitted_at.strftime('%Y-%m-%d %H:%M') }}
+                        </td>
+                        <td>
+                            <button onclick="showDetails({{ resp.id }})" class="btn-outline-cp" style="padding: 4px 12px; font-size: 12px;">
+                                <i class="fas fa-eye"></i>
+                                {{ 'عرض' if lang == 'ar' else 'View' }}
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5" style="color: var(--text-muted);">
+                            <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                            {{ 'لا توجد إجابات بعد' if lang == 'ar' else 'No responses yet' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="p-3 d-flex justify-content-between align-items-center" style="border-top: 1px solid var(--border-color); background: rgba(27,58,107,0.02);">
+            <span style="font-size: 12px; color: var(--text-secondary);" id="rowCount">
+                {{ 'يُعرض' if lang == 'ar' else 'Showing' }} {{ all_responses|length }}
+                {{ 'سجل' if lang == 'ar' else 'records' }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Response Detail Modal -->
+<div id="detailModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius: 16px; width: 90%; max-width: 680px; max-height: 85vh; overflow-y:auto; box-shadow: 0 25px 60px rgba(0,0,0,0.25);">
+        <div style="background: linear-gradient(135deg, var(--nbe-navy-dark), var(--nbe-navy)); padding: 20px 28px; border-radius: 16px 16px 0 0; display:flex; justify-content:space-between; align-items:center;">
+            <h5 style="color:white; margin:0; font-weight:700;">
+                <i class="fas fa-file-alt me-2"></i>
+                {{ 'تفاصيل الإجابة' if lang == 'ar' else 'Response Details' }}
+            </h5>
+            <button onclick="closeModal()" style="background:rgba(255,255,255,0.1); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:16px;">×</button>
+        </div>
+        <div id="modalContent" style="padding:28px;"></div>
+    </div>
+</div>
+
+<!-- Response Data (hidden) -->
+<div id="responseData" style="display:none;">
+    {% for resp in all_responses %}
+    {% set dept = dept_map.get(resp.department_id) %}
+    <div data-id="{{ resp.id }}"
+         data-dept="{{ (dept.name_ar if lang == 'ar' else dept.name_en) if dept else '—' }}"
+         data-name="{{ resp.employee_name or '' }}"
+         data-empid="{{ resp.employee_id or '' }}"
+         data-anon="{{ resp.is_anonymous }}"
+         data-date="{{ resp.submitted_at.strftime('%Y-%m-%d %H:%M') }}"
+         data-score="{{ resp.satisfaction_score or '—' }}">
+        {% for answer in resp.answers %}
+        {% if answer.question %}
+        <div class="answer-item"
+             data-qtxt="{{ answer.question.text_ar if lang == 'ar' else answer.question.text_en }}"
+             data-qtype="{{ answer.question.question_type }}"
+             data-val="{{ answer.answer_value or '' }}"
+             data-vals="{{ answer.answer_values or '[]' }}"></div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const LANG = '{{ lang }}';
+
+function filterTable() {
+    const deptFilter = document.getElementById('deptFilter').value.toLowerCase();
+    const searchVal = document.getElementById('searchInput').value.toLowerCase();
+    const anonFilter = document.getElementById('anonFilter').value;
+    const rows = document.querySelectorAll('.response-row');
+    let visible = 0;
+    rows.forEach(row => {
+        const dept = row.dataset.dept.toLowerCase();
+        const name = row.dataset.name.toLowerCase();
+        const eid = row.dataset.id.toLowerCase();
+        const anon = row.dataset.anon;
+        const matchDept = !deptFilter || dept.includes(deptFilter);
+        const matchSearch = !searchVal || name.includes(searchVal) || eid.includes(searchVal);
+        const matchAnon = !anonFilter || anon === anonFilter;
+        const show = matchDept && matchSearch && matchAnon;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    document.getElementById('rowCount').textContent =
+        (LANG === 'ar' ? 'يُعرض ' : 'Showing ') + visible + (LANG === 'ar' ? ' سجل' : ' records');
+}
+
+function resetFilters() {
+    document.getElementById('deptFilter').value = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('anonFilter').value = '';
+    filterTable();
+}
+
+function showDetails(id) {
+    const container = document.querySelector(`#responseData [data-id="${id}"]`);
+    if (!container) return;
+    const modal = document.getElementById('detailModal');
+    const content = document.getElementById('modalContent');
+
+    const isAnon = container.dataset.anon === 'True';
+    let html = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+            <div style="background:rgba(27,58,107,0.04); border-radius:10px; padding:14px;">
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">${LANG==='ar'?'القسم':'Department'}</div>
+                <div style="font-weight:700; color:var(--nbe-navy);">${container.dataset.dept}</div>
+            </div>
+            <div style="background:rgba(200,169,81,0.06); border-radius:10px; padding:14px;">
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">${LANG==='ar'?'النوع':'Type'}</div>
+                <div style="font-weight:700; color:var(--nbe-gold-dark);">${isAnon ? (LANG==='ar'?'مجهول':'Anonymous') : (LANG==='ar'?'مُعرَّف':'Named')}</div>
+            </div>
+            ${!isAnon ? `
+            <div style="background:rgba(27,58,107,0.04); border-radius:10px; padding:14px;">
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">${LANG==='ar'?'الاسم':'Name'}</div>
+                <div style="font-weight:600;">${container.dataset.name || '—'}</div>
+            </div>
+            <div style="background:rgba(27,58,107,0.04); border-radius:10px; padding:14px;">
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">${LANG==='ar'?'الرقم الوظيفي':'Employee ID'}</div>
+                <div style="font-weight:600;">${container.dataset.empid || '—'}</div>
+            </div>` : ''}
+            <div style="background:rgba(27,58,107,0.04); border-radius:10px; padding:14px;">
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">${LANG==='ar'?'تاريخ الإرسال':'Submitted'}</div>
+                <div style="font-weight:600;">${container.dataset.date}</div>
+            </div>
+            <div style="background:rgba(34,197,94,0.06); border-radius:10px; padding:14px;">
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">${LANG==='ar'?'متوسط التقييم':'Avg. Rating'}</div>
+                <div style="font-weight:700; color:#16a34a;">${container.dataset.score}</div>
+            </div>
+        </div>
+        <div style="height:1px; background:var(--border-color); margin-bottom:20px;"></div>
+        <h6 style="font-weight:700; color:var(--nbe-navy); margin-bottom:16px;">
+            <i class="fas fa-comments me-2"></i>${LANG==='ar'?'الإجابات':'Answers'}
+        </h6>
+    `;
+
+    const answers = container.querySelectorAll('.answer-item');
+    answers.forEach((a, i) => {
+        const qtype = a.dataset.qtype;
+        let valDisplay = '';
+        if (qtype === 'multiple_choice') {
+            try {
+                const vals = JSON.parse(a.dataset.vals);
+                valDisplay = vals.join(' | ');
+            } catch { valDisplay = a.dataset.vals; }
+        } else if (qtype === 'rating') {
+            const v = parseInt(a.dataset.val);
+            const stars = '★'.repeat(v) + '☆'.repeat(5-v);
+            valDisplay = `${stars} (${v}/5)`;
+        } else {
+            valDisplay = a.dataset.val || (LANG==='ar'?'لا توجد إجابة':'No answer');
+        }
+        html += `
+        <div style="background:${i%2===0?'rgba(27,58,107,0.02)':'white'}; border:1px solid var(--border-color); border-radius:10px; padding:14px 18px; margin-bottom:12px; border-right: 3px solid var(--nbe-navy);">
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">س${i+1}</div>
+            <div style="font-weight:600; color:var(--text-primary); margin-bottom:8px; font-size:14px;">${a.dataset.qtxt}</div>
+            <div style="color:var(--nbe-gold-dark); font-weight:600; font-size:14px;">${valDisplay}</div>
+        </div>`;
+    });
+
+    if (answers.length === 0) {
+        html += `<div style="text-align:center; color:var(--text-muted); padding:24px;">${LANG==='ar'?'لا توجد إجابات مسجلة':'No recorded answers'}</div>`;
+    }
+
+    content.innerHTML = html;
+    modal.style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('detailModal').style.display = 'none';
+}
+
+document.getElementById('detailModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+</script>
+{% endblock %}

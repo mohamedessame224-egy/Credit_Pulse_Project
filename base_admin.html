@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-layout">
+    <!-- Sidebar -->
+    <div class="admin-sidebar">
+        <div class="px-4 mb-3">
+            <div style="font-size: 13px; color: rgba(255,255,255,0.5);">
+                {{ 'مرحباً،' if lang == 'ar' else 'Welcome,' }}
+                <br>
+                <strong style="color: rgba(255,255,255,0.9);">
+                    {{ current_user["name_ar"] if lang == 'ar' else current_user["name_en"] }}
+                </strong>
+            </div>
+        </div>
+
+        <div class="admin-sidebar-section">{{ 'لوحة التحكم' if lang == 'ar' else 'DASHBOARD' }}</div>
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-sidebar-item {{ 'active' if request.endpoint == 'admin.dashboard' else '' }}">
+            <i class="fas fa-tachometer-alt"></i>
+            {{ 'الرئيسية' if lang == 'ar' else 'Overview' }}
+        </a>
+        <a href="{{ url_for('admin.responses') }}" class="admin-sidebar-item {{ 'active' if request.endpoint == 'admin.responses' else '' }}">
+            <i class="fas fa-list-alt"></i>
+            {{ 'الإجابات' if lang == 'ar' else 'Responses' }}
+        </a>
+        <a href="{{ url_for('admin.survey_manager') }}" class="admin-sidebar-item {{ 'active' if request.endpoint == 'admin.survey_manager' else '' }}">
+            <i class="fas fa-poll"></i>
+            {{ 'إدارة الاستبيان' if lang == 'ar' else 'Survey Manager' }}
+        </a>
+
+        <div class="admin-sidebar-section">{{ 'التقارير' if lang == 'ar' else 'REPORTS' }}</div>
+        <a href="{{ url_for('reports.excel_report') }}" class="admin-sidebar-item">
+            <i class="fas fa-file-excel" style="color: #22c55e;"></i>
+            {{ 'تقرير Excel' if lang == 'ar' else 'Excel Report' }}
+        </a>
+        <a href="{{ url_for('reports.pdf_report') }}" class="admin-sidebar-item">
+            <i class="fas fa-file-pdf" style="color: #ef4444;"></i>
+            {{ 'تقرير PDF' if lang == 'ar' else 'PDF Report' }}
+        </a>
+        <a href="{{ url_for('reports.word_report') }}" class="admin-sidebar-item">
+            <i class="fas fa-file-word" style="color: #3b82f6;"></i>
+            {{ 'تقرير Word' if lang == 'ar' else 'Word Report' }}
+        </a>
+
+        <div class="admin-sidebar-section">{{ 'النظام' if lang == 'ar' else 'SYSTEM' }}</div>
+        <a href="{{ url_for('employee.index') }}" class="admin-sidebar-item">
+            <i class="fas fa-external-link-alt"></i>
+            {{ 'بوابة الموظف' if lang == 'ar' else 'Employee Portal' }}
+        </a>
+        <a href="{{ url_for('admin.logout') }}" class="admin-sidebar-item">
+            <i class="fas fa-sign-out-alt" style="color: #ef4444;"></i>
+            {{ tr['nav_logout'] }}
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="admin-main">
+        {% block admin_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}{{ tr['nav_survey'] }} - {{ section.title_ar if lang == 'ar' else section.title_en }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Progress Bar -->
+    <div class="cp-progress-wrap mb-4 animate-in">
+        <div class="cp-progress-label">
+            <span>
+                <i class="fas fa-tasks me-2"></i>
+                {{ tr['survey_section'] }} {{ section_idx + 1 }} {{ tr['survey_of'] }} {{ total_sections }}
+                — {{ section.title_ar if lang == 'ar' else section.title_en }}
+            </span>
+            <span style="color: var(--nbe-gold);">{{ progress_pct }}%</span>
+        </div>
+        <div class="cp-progress-bar">
+            <div class="cp-progress-fill" style="width: {{ progress_pct }}%;"></div>
+        </div>
+    </div>
+
+    <form method="POST" id="surveyForm">
+        <!-- Section Header -->
+        <div class="section-header animate-in delay-1">
+            <div class="section-number">{{ section_idx + 1 }}</div>
+            <div class="section-header-text">
+                <h4>{{ section.title_ar if lang == 'ar' else section.title_en }}</h4>
+                <p>
+                    {% set q_count = section.questions|length %}
+                    {{ q_count }} {{ 'أسئلة' if lang == 'ar' else 'questions' }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Questions -->
+        {% for question in section.questions %}
+        <div class="question-card animate-in" style="animation-delay: {{ loop.index * 0.05 }}s;">
+            <div class="question-num">
+                {{ 'سؤال' if lang == 'ar' else 'Question' }} {{ loop.index }}
+                {% if question.is_required %}
+                <span class="required-mark">*</span>
+                {% endif %}
+            </div>
+            <div class="question-text">
+                {{ question.text_ar if lang == 'ar' else question.text_en }}
+            </div>
+
+            <!-- SINGLE CHOICE -->
+            {% if question.question_type == 'single_choice' %}
+            {% set opts = (question.options_ar if lang == 'ar' else question.options_en) | from_json %}
+            {% for opt in opts %}
+            <div class="choice-option">
+                <input type="radio" name="q_{{ question.id }}" id="q{{ question.id }}_{{ loop.index }}"
+                       value="{{ opt }}"
+                       {% if saved_answers.get(question.id|string) == opt %}checked{% endif %}
+                       {% if question.is_required %}required{% endif %}>
+                <label class="choice-label" for="q{{ question.id }}_{{ loop.index }}">
+                    <span class="choice-indicator"></span>
+                    {{ opt }}
+                </label>
+            </div>
+            {% endfor %}
+
+            <!-- MULTIPLE CHOICE -->
+            {% elif question.question_type == 'multiple_choice' %}
+            {% set opts = (question.options_ar if lang == 'ar' else question.options_en) | from_json %}
+            {% set saved_vals = saved_answers.get(question.id|string, '[]') | from_json %}
+            {% for opt in opts %}
+            <div class="choice-option">
+                <input type="checkbox" name="q_{{ question.id }}" id="q{{ question.id }}_{{ loop.index }}"
+                       value="{{ opt }}"
+                       {% if opt in saved_vals %}checked{% endif %}>
+                <label class="choice-label" for="q{{ question.id }}_{{ loop.index }}">
+                    <span class="choice-indicator" style="border-radius: 4px;"></span>
+                    {{ opt }}
+                </label>
+            </div>
+            {% endfor %}
+
+            <!-- RATING -->
+            {% elif question.question_type == 'rating' %}
+            <div class="rating-group">
+                {% set rating_labels_ar = ['ضعيف جداً', 'ضعيف', 'مقبول', 'جيد', 'ممتاز'] %}
+                {% set rating_labels_en = ['Very Poor', 'Poor', 'Fair', 'Good', 'Excellent'] %}
+                {% for i in range(1, 6) %}
+                <div>
+                    <input type="radio" class="rating-option" name="q_{{ question.id }}"
+                           id="q{{ question.id }}_r{{ i }}" value="{{ i }}"
+                           {% if saved_answers.get(question.id|string) == i|string %}checked{% endif %}
+                           {% if question.is_required %}required{% endif %}>
+                    <label class="rating-label" for="q{{ question.id }}_r{{ i }}">
+                        <span class="rating-num">{{ i }}</span>
+                        <span class="rating-text">{{ rating_labels_ar[i-1] if lang == 'ar' else rating_labels_en[i-1] }}</span>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- TEXT -->
+            {% elif question.question_type == 'text' %}
+            <textarea name="q_{{ question.id }}" class="cp-textarea"
+                      placeholder="{{ tr['survey_comment_placeholder'] }}"
+                      rows="4">{{ saved_answers.get(question.id|string, '') }}</textarea>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- Navigation -->
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            {% if section_idx > 0 %}
+            <button type="submit" name="prev" class="btn-outline-cp">
+                <i class="fas fa-arrow-right" style="transform: scaleX({{ -1 if lang == 'ar' else 1 }});"></i>
+                {{ tr['survey_prev'] }}
+            </button>
+            {% else %}
+            <a href="{{ url_for('employee.info') }}" class="btn-outline-cp">
+                <i class="fas fa-arrow-right" style="transform: scaleX({{ -1 if lang == 'ar' else 1 }});"></i>
+                {{ 'رجوع' if lang == 'ar' else 'Back' }}
+            </a>
+            {% endif %}
+
+            {% if section_idx + 1 < total_sections %}
+            <button type="submit" name="next" class="btn-primary-cp">
+                {{ tr['survey_next'] }}
+                <i class="fas fa-arrow-left" style="transform: scaleX({{ -1 if lang == 'ar' else 1 }});"></i>
+            </button>
+            {% else %}
+            <button type="submit" name="submit" class="btn-gold-cp" style="font-size: 16px; padding: 14px 36px;">
+                <i class="fas fa-paper-plane"></i>
+                {{ tr['survey_submit'] }}
+            </button>
+            {% endif %}
+        </div>
+    </form>
+
+    <!-- Section Nav Pills -->
+    <div class="d-flex gap-2 justify-content-center mt-4 flex-wrap">
+        {% for sec in sections %}
+        <div style="width: 10px; height: 10px; border-radius: 50%; background: {{ 'var(--nbe-gold)' if loop.index0 == section_idx else ('var(--nbe-navy)' if loop.index0 < section_idx else 'var(--border-color)') }};"></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add from_json filter support (handled server-side, but here for dynamic behavior)
+document.getElementById('surveyForm').addEventListener('submit', function(e) {
+    const btn = e.submitter;
+    if (btn && btn.name === 'submit') {
+        // Validate required questions
+        let valid = true;
+        {% for question in section.questions %}
+        {% if question.is_required and question.question_type != 'text' %}
+        const q{{ question.id }} = document.querySelectorAll('[name="q_{{ question.id }}"]:checked');
+        if (q{{ question.id }}.length === 0) {
+            valid = false;
+            document.querySelector('[name="q_{{ question.id }}"]').closest('.question-card').style.border = '2px solid var(--nbe-red)';
+        }
+        {% endif %}
+        {% endfor %}
+        if (!valid) {
+            e.preventDefault();
+            alert('{{ tr["survey_required_msg"] }}');
+        }
+    }
+});
+</script>
+{% endblock %}

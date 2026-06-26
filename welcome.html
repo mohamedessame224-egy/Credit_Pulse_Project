@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}{{ tr['welcome_title'] }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="hero-badge animate-in">
+                    <i class="fas fa-university"></i>
+                    {{ 'البنك الأهلي المصري - قطاع الائتمان' if lang == 'ar' else 'National Bank of Egypt - Credit Sector' }}
+                </div>
+                <h1 class="hero-title animate-in delay-1">
+                    Credit Pulse
+                </h1>
+                <p class="hero-subtitle animate-in delay-2">
+                    {{ survey.description_ar if lang == 'ar' and survey else (survey.description_en if survey else tr['welcome_desc']) }}
+                </p>
+                <div class="d-flex align-items-center gap-3 mb-4 animate-in delay-3">
+                    <div class="d-flex align-items-center gap-2" style="color: rgba(255,255,255,0.7); font-size: 14px;">
+                        <i class="fas fa-clock" style="color: var(--nbe-gold);"></i>
+                        {{ tr['welcome_time'] }}
+                        <strong style="color: var(--nbe-gold);">{{ survey.estimated_minutes if survey else 10 }}</strong>
+                        {{ tr['welcome_minutes'] }}
+                    </div>
+                    <span style="color: rgba(255,255,255,0.3);">|</span>
+                    <div style="color: rgba(255,255,255,0.7); font-size: 14px;">
+                        <i class="fas fa-shield-alt" style="color: var(--nbe-gold);"></i>
+                        {{ tr['welcome_confidential'] }}
+                    </div>
+                </div>
+                {% if survey and survey.is_active %}
+                <a href="{{ url_for('employee.info') }}" class="btn-gold-cp animate-in delay-4" style="font-size: 17px; padding: 15px 40px;">
+                    <i class="fas fa-play-circle"></i>
+                    {{ tr['welcome_start'] }}
+                </a>
+                {% else %}
+                <div class="alert" style="background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; display: inline-block; padding: 12px 24px;">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ 'لا يوجد استبيان نشط حالياً' if lang == 'ar' else 'No active survey available' }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="text-center animate-in delay-2">
+                    <div style="width: 200px; height: 200px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; border: 2px solid rgba(200,169,81,0.3);">
+                        <div style="width: 140px; height: 140px; background: rgba(200,169,81,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(200,169,81,0.5);">
+                            <div style="font-size: 60px; font-weight: 900; color: var(--nbe-gold); letter-spacing: -2px; line-height: 1;">CP</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container py-5">
+    <div class="row g-4 mb-5">
+        <div class="col-md-3 animate-in">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(27,58,107,0.08); color: var(--nbe-navy);">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="feature-title">{{ 'سرية تامة' if lang == 'ar' else 'Full Confidentiality' }}</div>
+                <div class="feature-desc">{{ 'إجاباتك محمية ومجهولة تماماً' if lang == 'ar' else 'Your responses are fully protected and anonymous' }}</div>
+            </div>
+        </div>
+        <div class="col-md-3 animate-in delay-1">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(200,169,81,0.08); color: var(--nbe-gold-dark);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="feature-title">{{ 'سريع وسهل' if lang == 'ar' else 'Quick & Easy' }}</div>
+                <div class="feature-desc">{{ '10 دقائق فقط لإكمال الاستبيان' if lang == 'ar' else 'Only 10 minutes to complete the survey' }}</div>
+            </div>
+        </div>
+        <div class="col-md-3 animate-in delay-2">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(34,197,94,0.08); color: #16a34a;">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="feature-title">{{ 'تأثير حقيقي' if lang == 'ar' else 'Real Impact' }}</div>
+                <div class="feature-desc">{{ 'نتائجك تساهم في تطوير بيئة العمل' if lang == 'ar' else 'Your results contribute to improving the work environment' }}</div>
+            </div>
+        </div>
+        <div class="col-md-3 animate-in delay-3">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(139,92,246,0.08); color: #7c3aed;">
+                    <i class="fas fa-language"></i>
+                </div>
+                <div class="feature-title">{{ 'ثنائي اللغة' if lang == 'ar' else 'Bilingual' }}</div>
+                <div class="feature-desc">{{ 'عربي وإنجليزي بالكامل' if lang == 'ar' else 'Fully Arabic and English' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Survey Info Strip -->
+    {% if survey %}
+    <div class="cp-card animate-in">
+        <div class="cp-card-header">
+            <div class="card-icon"><i class="fas fa-poll-h"></i></div>
+            <h5>{{ survey.title_ar if lang == 'ar' else survey.title_en }}</h5>
+        </div>
+        <div class="cp-card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <p class="mb-0" style="color: var(--text-secondary); font-size: 14px; line-height: 1.7;">
+                        {{ survey.description_ar if lang == 'ar' else survey.description_en }}
+                    </p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="d-flex justify-content-center gap-4">
+                        <div class="text-center">
+                            <div style="font-size: 28px; font-weight: 800; color: var(--nbe-navy);">{{ survey.sections|length }}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">{{ 'أقسام' if lang == 'ar' else 'Sections' }}</div>
+                        </div>
+                        <div style="width: 1px; background: var(--border-color);"></div>
+                        <div class="text-center">
+                            <div style="font-size: 28px; font-weight: 800; color: var(--nbe-gold-dark);">{{ survey.estimated_minutes }}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">{{ tr['welcome_minutes'] }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

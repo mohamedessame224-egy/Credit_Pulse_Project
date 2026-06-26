@@ -1,0 +1,206 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ 'إدارة الاستبيان' if lang == 'ar' else 'Survey Manager' }}{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4 animate-in">
+    <div>
+        <h4 style="font-weight:800; color:var(--nbe-navy); margin:0;">
+            <i class="fas fa-poll me-2" style="color:var(--nbe-gold-dark);"></i>
+            {{ 'إدارة الاستبيان' if lang == 'ar' else 'Survey Manager' }}
+        </h4>
+        <p style="color:var(--text-secondary); font-size:13px; margin:4px 0 0;">
+            {{ 'عرض وإدارة هيكل الاستبيان الحالي' if lang == 'ar' else 'View and manage the current survey structure' }}
+        </p>
+    </div>
+</div>
+
+{% if survey %}
+<!-- Survey Info Card -->
+<div class="cp-card mb-4 animate-in delay-1">
+    <div class="cp-card-header">
+        <div class="card-icon"><i class="fas fa-info-circle"></i></div>
+        <h5>{{ 'معلومات الاستبيان' if lang == 'ar' else 'Survey Information' }}</h5>
+        <span class="cp-badge cp-badge-green ms-auto" style="font-size:12px;">
+            <i class="fas fa-circle me-1" style="font-size:8px;"></i>
+            {{ 'نشط' if lang == 'ar' else 'Active' }}
+        </span>
+    </div>
+    <div class="cp-card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div style="margin-bottom:16px;">
+                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">{{ 'العنوان بالعربية' if lang == 'ar' else 'Arabic Title' }}</div>
+                    <div style="font-weight:700; color:var(--text-primary); font-size:16px;">{{ survey.title_ar }}</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">{{ 'الوصف' if lang == 'ar' else 'Description' }}</div>
+                    <div style="color:var(--text-secondary); font-size:13px; line-height:1.7;">{{ survey.description_ar if lang == 'ar' else survey.description_en }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div style="background:rgba(27,58,107,0.04); border-radius:10px; padding:16px; text-align:center;">
+                            <div style="font-size:28px; font-weight:800; color:var(--nbe-navy);">{{ survey.sections|length }}</div>
+                            <div style="font-size:12px; color:var(--text-secondary);">{{ 'أقسام' if lang == 'ar' else 'Sections' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div style="background:rgba(200,169,81,0.06); border-radius:10px; padding:16px; text-align:center;">
+                            <div style="font-size:28px; font-weight:800; color:var(--nbe-gold-dark);">
+                                {% set total_q = namespace(count=0) %}
+                                {% for sec in survey.sections %}{% set total_q.count = total_q.count + sec.questions|length %}{% endfor %}
+                                {{ total_q.count }}
+                            </div>
+                            <div style="font-size:12px; color:var(--text-secondary);">{{ 'أسئلة' if lang == 'ar' else 'Questions' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div style="background:rgba(34,197,94,0.06); border-radius:10px; padding:16px; text-align:center;">
+                            <div style="font-size:28px; font-weight:800; color:#16a34a;">{{ survey.estimated_minutes }}</div>
+                            <div style="font-size:12px; color:var(--text-secondary);">{{ 'دقيقة' if lang == 'ar' else 'Minutes' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div style="background:rgba(139,92,246,0.06); border-radius:10px; padding:16px; text-align:center;">
+                            <div style="font-size:28px; font-weight:800; color:#7c3aed;">{{ survey.responses|length }}</div>
+                            <div style="font-size:12px; color:var(--text-secondary);">{{ 'إجابة' if lang == 'ar' else 'Responses' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sections & Questions -->
+{% for section in survey.sections %}
+<div class="cp-card mb-4 animate-in" style="animation-delay: {{ loop.index * 0.1 }}s;">
+    <div class="cp-card-header">
+        <div style="width:36px; height:36px; background:var(--nbe-gold); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; color:var(--nbe-navy-dark); font-size:14px; flex-shrink:0;">{{ loop.index }}</div>
+        <h5>{{ section.title_ar if lang == 'ar' else section.title_en }}</h5>
+        <span class="cp-badge cp-badge-navy ms-auto" style="font-size:11px;">
+            {{ section.questions|length }} {{ 'أسئلة' if lang == 'ar' else 'questions' }}
+        </span>
+    </div>
+    <div class="cp-card-body p-0">
+        <table class="cp-table">
+            <thead>
+                <tr>
+                    <th style="width:50px;">#</th>
+                    <th>{{ 'نص السؤال' if lang == 'ar' else 'Question Text' }}</th>
+                    <th style="width:140px;">{{ 'النوع' if lang == 'ar' else 'Type' }}</th>
+                    <th style="width:100px;">{{ 'إلزامي' if lang == 'ar' else 'Required' }}</th>
+                    <th style="width:120px;">{{ 'عدد الإجابات' if lang == 'ar' else 'Answers' }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in section.questions %}
+                <tr>
+                    <td style="color:var(--text-muted); font-size:12px;">{{ q.order_num }}</td>
+                    <td>
+                        <div style="font-weight:600; color:var(--text-primary); font-size:13px; line-height:1.5;">
+                            {{ q.text_ar if lang == 'ar' else q.text_en }}
+                        </div>
+                        {% if q.question_type in ['single_choice', 'multiple_choice'] %}
+                        {% set opts = (q.options_ar if lang == 'ar' else q.options_en) | from_json %}
+                        <div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:4px;">
+                            {% for opt in opts %}
+                            <span style="background:rgba(27,58,107,0.06); color:var(--text-secondary); padding:2px 8px; border-radius:12px; font-size:11px;">{{ opt }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set type_labels = {
+                            'single_choice': ('اختيار واحد' if lang=='ar' else 'Single Choice'),
+                            'multiple_choice': ('اختيار متعدد' if lang=='ar' else 'Multiple Choice'),
+                            'rating': ('تقييم' if lang=='ar' else 'Rating Scale'),
+                            'text': ('نص حر' if lang=='ar' else 'Text')
+                        } %}
+                        {% set type_colors = {
+                            'single_choice': 'cp-badge-navy',
+                            'multiple_choice': 'cp-badge-gold',
+                            'rating': 'cp-badge-green',
+                            'text': ''
+                        } %}
+                        <span class="cp-badge {{ type_colors.get(q.question_type, '') }}"
+                              style="{{ 'background:rgba(139,92,246,0.1); color:#7c3aed;' if q.question_type == 'text' else '' }} font-size:11px;">
+                            {{ type_labels.get(q.question_type, q.question_type) }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="cp-badge {{ 'cp-badge-red' if q.is_required else 'cp-badge-green' }}" style="font-size:11px;">
+                            {{ ('إلزامي' if lang=='ar' else 'Required') if q.is_required else ('اختياري' if lang=='ar' else 'Optional') }}
+                        </span>
+                    </td>
+                    <td>
+                        <span style="font-weight:700; color:var(--nbe-navy);">{{ q.answers|length }}</span>
+                        <span style="font-size:11px; color:var(--text-muted);"> {{ 'إجابة' if lang=='ar' else 'answers' }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+
+<!-- How to Add Survey Info -->
+<div class="cp-card animate-in">
+    <div class="cp-card-header">
+        <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
+        <h5 style="color: var(--nbe-gold-light);">{{ 'كيفية إضافة استبيان جديد' if lang == 'ar' else 'How to Add a New Survey' }}</h5>
+    </div>
+    <div class="cp-card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <h6 style="font-weight:700; color:var(--nbe-navy); margin-bottom:12px;">
+                    <i class="fas fa-file-alt me-2"></i>
+                    {{ 'من ملف TXT' if lang == 'ar' else 'From TXT File' }}
+                </h6>
+                <p style="font-size:13px; color:var(--text-secondary); line-height:1.8;">
+                    {{ 'ضع ملف الاستبيان في مجلد data/ بتنسيق:' if lang == 'ar' else 'Place survey file in data/ folder with format:' }}
+                </p>
+                <pre style="background:rgba(27,58,107,0.04); border-radius:8px; padding:14px; font-size:12px; color:var(--text-primary); border: 1px solid var(--border-color); direction:ltr; text-align:left; overflow-x:auto;">SECTION: Work Environment
+SECTION_AR: بيئة العمل
+
+QUESTION: Rate communication level
+QUESTION_AR: قيّم مستوى التواصل
+TYPE: rating
+
+QUESTION: Main challenges?
+QUESTION_AR: ما أبرز التحديات؟
+TYPE: single_choice
+OPTIONS: Excellent|Good|Fair|Poor
+OPTIONS_AR: ممتاز|جيد|مقبول|ضعيف</pre>
+            </div>
+            <div class="col-md-6">
+                <h6 style="font-weight:700; color:var(--nbe-navy); margin-bottom:12px;">
+                    <i class="fas fa-database me-2"></i>
+                    {{ 'من قاعدة البيانات' if lang == 'ar' else 'From Database' }}
+                </h6>
+                <p style="font-size:13px; color:var(--text-secondary); line-height:1.8;">
+                    {{ 'يمكن تعديل utils/init_db.py لإضافة أسئلة مباشرة في قاعدة البيانات.' if lang == 'ar' else 'You can modify utils/init_db.py to add questions directly to the database.' }}
+                </p>
+                <div style="background:rgba(200,169,81,0.06); border:1px solid rgba(200,169,81,0.2); border-radius:10px; padding:16px;">
+                    <p style="font-size:12px; color:var(--text-secondary); margin:0; line-height:1.7;">
+                        <i class="fas fa-info-circle me-2" style="color:var(--nbe-gold-dark);"></i>
+                        {{ 'لإضافة استبيان جديد: عدّل ملف init_db.py ثم احذف قاعدة البيانات وأعد تشغيل البرنامج.' if lang == 'ar' else 'To add a new survey: edit init_db.py, delete the database file, then restart the app.' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="cp-card animate-in">
+    <div class="cp-card-body text-center py-5">
+        <i class="fas fa-poll fa-3x mb-3" style="color:var(--border-color);"></i>
+        <h5 style="color:var(--text-secondary);">{{ 'لا يوجد استبيان نشط' if lang == 'ar' else 'No Active Survey' }}</h5>
+        <p style="color:var(--text-muted); font-size:13px;">{{ 'يمكنك إضافة استبيان من خلال تعديل utils/init_db.py' if lang == 'ar' else 'You can add a survey by modifying utils/init_db.py' }}</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
